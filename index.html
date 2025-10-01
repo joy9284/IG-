@@ -1,48 +1,171 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>IG 模擬器 (3:4)</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .ig-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-      width: 375px; /* 模擬手機寬度 */
-      margin-top: 20px;
-    }
-    .ig-grid img {
-      width: 100%;
-      aspect-ratio: 3 / 4; /* 固定比例 3:4 */
-      object-fit: cover;    /* 超出部分裁切 */
-      background: #000;     /* 補底色避免空白 */
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IG 九宮格模擬器 + 精準裁切</title>
+<style>
+body { font-family: Arial; padding: 20px; background: #f7f7f7; }
+h1 { text-align: center; }
+#upload { display: block; margin: 20px auto; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-width: 600px; margin: 0 auto; }
+.grid-item { position: relative; aspect-ratio: 4/5; cursor: grab; }
+.grid-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+.delete-btn { position: absolute; top: 2px; right: 2px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 14px; line-height: 20px; text-align: center; cursor: pointer; }
+#cropModal { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+#cropContainer { background:#fff; padding:10px; border-radius:5px; position: relative; }
+#cropCanvas { border:1px solid #ccc; cursor: crosshair; }
+#cropBtns { margin-top: 5px; text-align: right; }
+#cropBtns button { margin-left: 5px; }
+</style>
 </head>
 <body>
-  <h2>IG Grid 模擬器 (3:4)</h2>
-  <div class="ig-grid">
-    <img src="https://via.placeholder.com/300x400" alt="">
-    <img src="https://via.placeholder.com/300x400" alt="">
-    <img src="https://via.placeholder.com/300x400" alt="">
-    <img src="https://via.placeholder.com/300x400" alt="">
-    <img src="https://via.placeholder.com/300x400" alt="">
-    <img src="https://via.placeholder.com/300x400" alt="">
-    <img src="https://via.placeholder.com/300x400" alt="">
-    <img src="https://via.placeholder.com/300x400" alt="">
-    <img src="https://via.placeholder.com/300x400" alt="">
+
+<h1>IG 九宮格模擬器 + 精準裁切</h1>
+<input type="file" id="upload" multiple accept="image/*">
+<div class="grid" id="grid"></div>
+
+<!-- 裁切彈窗 -->
+<div id="cropModal">
+  <div id="cropContainer">
+    <canvas id="cropCanvas"></canvas>
+    <div id="cropBtns">
+      <button id="cancelCrop">取消</button>
+      <button id="applyCrop">確定裁切</button>
+    </div>
   </div>
-</body>
-</html>
+</div>
 
+<script>
+const upload = document.getElementById('upload');
+const grid = document.getElementById('grid');
 
-  <script src="script.js"></script>
+let cropModal = document.getElementById('cropModal');
+let cropCanvas = document.getElementById('cropCanvas');
+let ctx = cropCanvas.getContext('2d');
+let currentImage = null;
+let imgObj = null;
+
+// 裁切框位置
+let cropX = 50, cropY = 50, cropW = 200, cropH = 250; // 固定4:5比例
+let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+let isResizing = false, resizeStart = {};
+
+function createGridItem(file) {
+  const gridItem = document.createElement('div');
+  gridItem.className = 'grid-item';
+  gridItem.draggable = true;
+
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(file);
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'delete-btn';
+  delBtn.textContent = '×';
+  delBtn.addEventListener('click', () => gridItem.remove());
+
+  img.addEventListener('click', () => openCrop(img));
+
+  gridItem.appendChild(img);
+  gridItem.appendChild(delBtn);
+  addDragEvents(gridItem);
+  return gridItem;
+}
+
+upload.addEventListener('change', (e) => {
+  const files = Array.from(e.target.files);
+  files.forEach(file => grid.appendChild(createGridItem(file)));
+});
+
+// 拖曳排序功能
+let draggedItem = null;
+function addDragEvents(item){
+  item.addEventListener('dragstart', () => { draggedItem = item; setTimeout(()=>{item.style.display='none';},0); });
+  item.addEventListener('dragend', () => { draggedItem=null; item.style.display='block'; });
+  item.addEventListener('dragover', e => e.preventDefault());
+  item.addEventListener('dragenter', e => { e.preventDefault(); if(item!==draggedItem){grid.insertBefore(draggedItem,item.nextSibling);} });
+}
+
+// 裁切功能
+function openCrop(img){
+  currentImage = img;
+  imgObj = new Image();
+  imgObj.src = img.src;
+  imgObj.onload = function(){
+    cropCanvas.width = 400;
+    cropCanvas.height = 500;
+    cropX = 50; cropY = 50; cropW = 200; cropH = 250;
+    drawCrop();
+    cropModal.style.display = 'flex';
+  }
+}
+
+function drawCrop(){
+  ctx.clearRect(0,0,cropCanvas.width,cropCanvas.height);
+  ctx.drawImage(imgObj,0,0,cropCanvas.width,cropCanvas.height);
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cropX, cropY, cropW, cropH);
+}
+
+// 判斷是否在框內
+function isInside(x,y){ return x>=cropX && x<=cropX+cropW && y>=cropY && y<=cropY+cropH; }
+
+cropCanvas.addEventListener('mousedown', e => {
+  let x = e.offsetX, y = e.offsetY;
+  if(isInside(x,y)){ // 拖動
+    isDragging = true;
+    dragOffsetX = x - cropX;
+    dragOffsetY = y - cropY;
+  } else { // 右下角小範圍可縮放
+    if(Math.abs(x-(cropX+cropW))<10 && Math.abs(y-(cropY+cropH))<10){
+      isResizing = true;
+      resizeStart = {x, y, w: cropW, h: cropH};
+    }
+  }
+});
+
+cropCanvas.addEventListener('mousemove', e => {
+  let x = e.offsetX, y = e.offsetY;
+  if(isDragging){
+    cropX = x - dragOffsetX;
+    cropY = y - dragOffsetY;
+    if(cropX<0) cropX=0; if(cropY<0) cropY=0;
+    if(cropX+cropW>cropCanvas.width) cropX=cropCanvas.width-cropW;
+    if(cropY+cropH>cropCanvas.height) cropY=cropCanvas.height-cropH;
+    drawCrop();
+  } else if(isResizing){
+    let dx = x - resizeStart.x;
+    cropW = resizeStart.w + dx;
+    cropH = cropW * 5/4;
+    if(cropW<50){ cropW=50; cropH=cropW*5/4; }
+    if(cropX+cropW>cropCanvas.width){ cropW=cropCanvas.width-cropX; cropH=cropW*5/4; }
+    if(cropY+cropH>cropCanvas.height){ cropH=cropCanvas.height-cropY; cropW=cropH*4/5; }
+    drawCrop();
+  }
+});
+
+cropCanvas.addEventListener('mouseup', e => { isDragging=false; isResizing=false; });
+
+// 取消裁切
+document.getElementById('cancelCrop').addEventListener('click', ()=>{cropModal.style.display='none';});
+
+// 確定裁切
+document.getElementById('applyCrop').addEventListener('click', ()=>{
+  let tempCanvas = document.createElement('canvas');
+  tempCanvas.width=400; tempCanvas.height=500;
+  let tCtx = tempCanvas.getContext('2d');
+  tCtx.drawImage(imgObj,
+    cropX*(imgObj.width/cropCanvas.width),
+    cropY*(imgObj.height/cropCanvas.height),
+    cropW*(imgObj.width/cropCanvas.width),
+    cropH*(imgObj.height/cropCanvas.height),
+    0,0,tempCanvas.width,tempCanvas.height
+  );
+  currentImage.src = tempCanvas.toDataURL();
+  cropModal.style.display='none';
+});
+</script>
+
 </body>
 </html>

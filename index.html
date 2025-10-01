@@ -3,14 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IG 九宮格模擬器 + 記憶功能</title>
+<title>IG 九宮格模擬器 + 選擇操作</title>
 <style>
 body { font-family: Arial; background:#f7f7f7; display:flex; flex-direction:column; align-items:center; padding:20px;}
 h1{ text-align:center; margin-bottom:20px;}
 .grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:2px; width:360px; }
 .grid-item { position:relative; width:100%; padding-top:125%; background:#ddd; cursor:pointer; overflow:hidden; }
 .grid-item img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
-.delete-btn { display:none; }
+.menu { position:absolute; background:#fff; border:1px solid #ccc; border-radius:5px; display:none; z-index:100; }
+.menu button { display:block; width:100%; border:none; background:none; padding:5px 10px; cursor:pointer; text-align:left; }
+.menu button:hover { background:#f0f0f0; }
+#fileInput { display:none; }
 #cropModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); justify-content:center; align-items:center; }
 #cropContainer { background:#fff; padding:10px; border-radius:5px; position:relative; }
 #cropCanvas { border:1px solid #ccc; cursor: crosshair; }
@@ -22,7 +25,13 @@ h1{ text-align:center; margin-bottom:20px;}
 <h1>IG 九宮格模擬器</h1>
 
 <div class="grid" id="grid"></div>
-<input type="file" id="fileInput" accept="image/*" style="display:none;">
+<input type="file" id="fileInput" accept="image/*">
+
+<!-- 操作選單 -->
+<div id="cellMenu" class="menu">
+  <button id="changeImage">更換圖片</button>
+  <button id="cropImage">裁切圖片</button>
+</div>
 
 <!-- 裁切彈窗 -->
 <div id="cropModal">
@@ -38,11 +47,13 @@ h1{ text-align:center; margin-bottom:20px;}
 <script>
 const grid = document.getElementById('grid');
 const fileInput = document.getElementById('fileInput');
+const cellMenu = document.getElementById('cellMenu');
+let currentCell = null;
+
+// 裁切
 let cropModal = document.getElementById('cropModal');
 let cropCanvas = document.getElementById('cropCanvas');
 let ctx = cropCanvas.getContext('2d');
-
-let currentCell = null;
 let imgObj = null;
 let cropX=50, cropY=50, cropW=200, cropH=250;
 let isDragging=false,dragOffsetX=0,dragOffsetY=0;
@@ -61,25 +72,48 @@ for(let i=0;i<9;i++){
   const saved = localStorage.getItem('ig_grid_'+i);
   if(saved) img.src = saved;
 
-  div.addEventListener('click',()=>{
+  // 點擊格子彈出選單
+  div.addEventListener('click',(e)=>{
     currentCell=div;
-    fileInput.click();
+    const rect=div.getBoundingClientRect();
+    cellMenu.style.top = rect.bottom + window.scrollY + 'px';
+    cellMenu.style.left = rect.left + window.scrollX + 'px';
+    cellMenu.style.display='block';
   });
 }
 
-// 點擊格子選擇圖片
+// 點擊空白處隱藏選單
+document.addEventListener('click',(e)=>{
+  if(!grid.contains(e.target) && !cellMenu.contains(e.target)){
+    cellMenu.style.display='none';
+  }
+});
+
+// 更換圖片
+document.getElementById('changeImage').addEventListener('click',()=>{
+  cellMenu.style.display='none';
+  fileInput.click();
+});
 fileInput.addEventListener('change',e=>{
   if(e.target.files.length==0) return;
   const file=e.target.files[0];
   const reader=new FileReader();
   reader.onload=function(ev){
-    openCrop(ev.target.result);
+    currentCell.querySelector('img').src = ev.target.result;
+    localStorage.setItem('ig_grid_'+currentCell.dataset.index, ev.target.result);
   }
   reader.readAsDataURL(file);
   fileInput.value='';
 });
 
-// 開啟裁切
+// 裁切圖片
+document.getElementById('cropImage').addEventListener('click',()=>{
+  cellMenu.style.display='none';
+  const img = currentCell.querySelector('img');
+  openCrop(img.src);
+});
+
+// 打開裁切視窗
 function openCrop(src){
   imgObj = new Image();
   imgObj.src = src;
@@ -143,11 +177,9 @@ document.getElementById('applyCrop').addEventListener('click',()=>{
   );
   let dataURL = tempCanvas.toDataURL();
   currentCell.querySelector('img').src = dataURL;
-  // 儲存 localStorage
   localStorage.setItem('ig_grid_'+currentCell.dataset.index, dataURL);
   cropModal.style.display='none';
 });
 </script>
 </body>
 </html>
-

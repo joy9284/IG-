@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IG 九宮格模擬器 + 選擇操作</title>
+<title>IG 九宮格模擬器 + 拖曳 + 裁切 + 記憶</title>
 <style>
 body { font-family: Arial; background:#f7f7f7; display:flex; flex-direction:column; align-items:center; padding:20px;}
 h1{ text-align:center; margin-bottom:20px;}
@@ -60,16 +60,17 @@ let isDragging=false,dragOffsetX=0,dragOffsetY=0;
 let isResizing=false,resizeStart={};
 
 // 初始化九宮格
+let gridOrder = JSON.parse(localStorage.getItem('ig_grid_order')) || Array.from({length:9},(_,i)=>i);
 for(let i=0;i<9;i++){
   const div=document.createElement('div');
   div.className='grid-item';
-  div.dataset.index=i;
+  div.dataset.index=gridOrder[i];
   const img=document.createElement('img');
   div.appendChild(img);
   grid.appendChild(div);
 
   // 載入 localStorage 的圖片
-  const saved = localStorage.getItem('ig_grid_'+i);
+  const saved = localStorage.getItem('ig_grid_'+gridOrder[i]);
   if(saved) img.src = saved;
 
   // 點擊格子彈出選單
@@ -79,6 +80,19 @@ for(let i=0;i<9;i++){
     cellMenu.style.top = rect.bottom + window.scrollY + 'px';
     cellMenu.style.left = rect.left + window.scrollX + 'px';
     cellMenu.style.display='block';
+  });
+
+  // 拖曳排序
+  div.draggable = true;
+  div.addEventListener('dragstart',(e)=>{
+    e.dataTransfer.setData('text/plain', div.dataset.index);
+  });
+  div.addEventListener('dragover',(e)=>{ e.preventDefault(); });
+  div.addEventListener('drop',(e)=>{
+    e.preventDefault();
+    let fromIndex = e.dataTransfer.getData('text/plain');
+    let toIndex = div.dataset.index;
+    swapGrid(fromIndex,toIndex);
   });
 }
 
@@ -127,7 +141,15 @@ function openCrop(src){
 
 function drawCrop(){
   ctx.clearRect(0,0,cropCanvas.width,cropCanvas.height);
-  ctx.drawImage(imgObj,0,0,imgObj.width,imgObj.height,0,0,cropCanvas.width,cropCanvas.height);
+  let scale, offsetX=0, offsetY=0;
+  if(imgObj.width/imgObj.height > cropCanvas.width/cropCanvas.height){
+    scale = cropCanvas.height / imgObj.height;
+    offsetX = (cropCanvas.width - imgObj.width*scale)/2;
+  } else {
+    scale = cropCanvas.width / imgObj.width;
+    offsetY = (cropCanvas.height - imgObj.height*scale)/2;
+  }
+  ctx.drawImage(imgObj, offsetX, offsetY, imgObj.width*scale, imgObj.height*scale);
   ctx.strokeStyle='red';
   ctx.lineWidth=2;
   ctx.strokeRect(cropX,cropY,cropW,cropH);
@@ -165,21 +187,47 @@ document.getElementById('cancelCrop').addEventListener('click',()=>{cropModal.st
 
 // 確定裁切
 document.getElementById('applyCrop').addEventListener('click',()=>{
-  let tempCanvas=document.createElement('canvas');
-  tempCanvas.width=400; tempCanvas.height=500;
-  let tCtx=tempCanvas.getContext('2d');
-  tCtx.drawImage(imgObj,
-    cropX*(imgObj.width/cropCanvas.width),
-    cropY*(imgObj.height/cropCanvas.height),
-    cropW*(imgObj.width/cropCanvas.width),
-    cropH*(imgObj.height/cropCanvas.height),
-    0,0,tempCanvas.width,tempCanvas.height
-  );
-  let dataURL = tempCanvas.toDataURL();
-  currentCell.querySelector('img').src = dataURL;
-  localStorage.setItem('ig_grid_'+currentCell.dataset.index, dataURL);
+  let scale, offsetX=0, offsetY=0;
+  if(imgObj.width/imgObj.height > cropCanvas.width/cropCanvas.height){
+    scale = cropCanvas.height / imgObj.height;
+    offsetX = (cropCanvas.width - imgObj.width*scale)/2;
+  } else {
+    scale = cropCanvas.width / imgObj.width;
+    offsetY = (cropCanvas.height - imgObj.height*scale)/2;
+  }
+
+  let sx = (cropX - offsetX)/scale;
+  let sy = (cropY - offsetY)/scale;
+  let sw = cropW/scale;
+  let sh = cropH/scale;
+
+  let tempCanvas = document.createElement('canvas');
+  tempCanvas.width = sw; tempCanvas.height = sh;
+  let tCtx = tempCanvas.getContext('2d');
+  tCtx.drawImage(imgObj, sx, sy, sw, sh, 0, 0, sw, sh);
+
+  currentCell.querySelector('img').src = tempCanvas.toDataURL();
+  localStorage.setItem('ig_grid_'+currentCell.dataset.index, tempCanvas.toDataURL());
   cropModal.style.display='none';
 });
+
+// 拖曳排序交換
+function swapGrid(fromIndex,toIndex){
+  if(fromIndex===toIndex) return;
+  let fromDiv = Array.from(grid.children).find(d=>d.dataset.index==fromIndex);
+  let toDiv = Array.from(grid.children).find(d=>d.dataset.index==toIndex);
+  let fromImg = fromDiv.querySelector('img').src;
+  let toImg = toDiv.querySelector('img').src;
+  fromDiv.querySelector('img').src = toImg;
+  toDiv.querySelector('img').src = fromImg;
+  localStorage.setItem('ig_grid_'+fromDiv.dataset.index, fromDiv.querySelector('img').src);
+  localStorage.setItem('ig_grid_'+toDiv.dataset.index, toDiv.querySelector('img').src);
+
+  // 更新順序
+  let order = Array.from(grid.children).map(d=>parseInt(d.dataset.index));
+  localStorage.setItem('ig_grid_order', JSON.stringify(order));
+}
 </script>
 </body>
 </html>
+

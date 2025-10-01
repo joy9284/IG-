@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>IG 貼文模擬器</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>IG 貼文模擬器</h2>
+  
+  <!-- 輸入區 -->
+  <input type="text" id="username" placeholder="帳號名稱">
+  <input type="file" id="upload">
+  <textarea id="captionInput" rows="3" placeholder="輸入貼文文字..."></textarea>
+
+  <!-- 模擬貼文區 -->
+  <div class="ig-post">
+    <div class="header">
+      <img id="avatar" src="https://i.pravatar.cc/30" alt="avatar">
+      <b id="displayUsername">username</b>
+    </div>
+    <img id="postImage" class="post-img" src="https://via.placeholder.com/375x375" alt="post">
+    <div class="footer">
+      <img src="https://cdn-icons-png.flaticon.com/512/1077/1077035.png" alt="like">
+      <img src="https://cdn-icons-png.flaticon.com/512/1380/1380338.png" alt="comment">
+    </div>
+    <div class="caption">
+      <span id="captionUsername">username</span>
+      <span id="captionText">這是測試貼文</span>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

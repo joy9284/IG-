@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IG 九宮格模擬器 + 拖曳 + 裁切 + 記憶</title>
+<title>IG 九宮格模擬器</title>
 <style>
 body { font-family: Arial; background:#f7f7f7; display:flex; flex-direction:column; align-items:center; padding:20px;}
 h1{ text-align:center; margin-bottom:20px;}
@@ -27,13 +27,11 @@ h1{ text-align:center; margin-bottom:20px;}
 <div class="grid" id="grid"></div>
 <input type="file" id="fileInput" accept="image/*">
 
-<!-- 操作選單 -->
 <div id="cellMenu" class="menu">
   <button id="changeImage">更換圖片</button>
   <button id="cropImage">裁切圖片</button>
 </div>
 
-<!-- 裁切彈窗 -->
 <div id="cropModal">
   <div id="cropContainer">
     <canvas id="cropCanvas"></canvas>
@@ -115,6 +113,7 @@ fileInput.addEventListener('change',e=>{
   reader.onload=function(ev){
     currentCell.querySelector('img').src = ev.target.result;
     localStorage.setItem('ig_grid_'+currentCell.dataset.index, ev.target.result);
+    localStorage.setItem('original_ig_grid_'+currentCell.dataset.index, ev.target.result); // 存原圖
   }
   reader.readAsDataURL(file);
   fileInput.value='';
@@ -123,8 +122,13 @@ fileInput.addEventListener('change',e=>{
 // 裁切圖片
 document.getElementById('cropImage').addEventListener('click',()=>{
   cellMenu.style.display='none';
-  const img = currentCell.querySelector('img');
-  openCrop(img.src);
+  const index = currentCell.dataset.index;
+  const originalSrc = localStorage.getItem('original_ig_grid_'+index);
+  if(originalSrc){
+    openCrop(originalSrc);
+  } else {
+    openCrop(currentCell.querySelector('img').src);
+  }
 });
 
 // 打開裁切視窗
@@ -187,6 +191,8 @@ document.getElementById('cancelCrop').addEventListener('click',()=>{cropModal.st
 
 // 確定裁切
 document.getElementById('applyCrop').addEventListener('click',()=>{
+  if(!imgObj) return;
+
   let scale, offsetX=0, offsetY=0;
   if(imgObj.width/imgObj.height > cropCanvas.width/cropCanvas.height){
     scale = cropCanvas.height / imgObj.height;
@@ -201,13 +207,19 @@ document.getElementById('applyCrop').addEventListener('click',()=>{
   let sw = cropW/scale;
   let sh = cropH/scale;
 
+  sx = Math.max(0, sx); sy = Math.max(0, sy);
+  sw = Math.min(sw, imgObj.width - sx);
+  sh = Math.min(sh, imgObj.height - sy);
+
   let tempCanvas = document.createElement('canvas');
-  tempCanvas.width = sw; tempCanvas.height = sh;
+  tempCanvas.width = 400;
+  tempCanvas.height = 500;
   let tCtx = tempCanvas.getContext('2d');
-  tCtx.drawImage(imgObj, sx, sy, sw, sh, 0, 0, sw, sh);
+  tCtx.drawImage(imgObj, sx, sy, sw, sh, 0, 0, tempCanvas.width, tempCanvas.height);
 
   currentCell.querySelector('img').src = tempCanvas.toDataURL();
   localStorage.setItem('ig_grid_'+currentCell.dataset.index, tempCanvas.toDataURL());
+
   cropModal.style.display='none';
 });
 
@@ -223,11 +235,9 @@ function swapGrid(fromIndex,toIndex){
   localStorage.setItem('ig_grid_'+fromDiv.dataset.index, fromDiv.querySelector('img').src);
   localStorage.setItem('ig_grid_'+toDiv.dataset.index, toDiv.querySelector('img').src);
 
-  // 更新順序
   let order = Array.from(grid.children).map(d=>parseInt(d.dataset.index));
   localStorage.setItem('ig_grid_order', JSON.stringify(order));
 }
 </script>
 </body>
 </html>
-

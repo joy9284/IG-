@@ -2,33 +2,46 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>IG 貼文模擬器</title>
-  <link rel="stylesheet" href="style.css">
+  <title>IG 模擬器 (3:4)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .ig-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      width: 375px; /* 模擬手機寬度 */
+      margin-top: 20px;
+    }
+    .ig-grid img {
+      width: 100%;
+      aspect-ratio: 3 / 4; /* 固定比例 3:4 */
+      object-fit: cover;    /* 超出部分裁切 */
+      background: #000;     /* 補底色避免空白 */
+    }
+  </style>
 </head>
 <body>
-  <h2>IG 貼文模擬器</h2>
-  
-  <!-- 輸入區 -->
-  <input type="text" id="username" placeholder="帳號名稱">
-  <input type="file" id="upload">
-  <textarea id="captionInput" rows="3" placeholder="輸入貼文文字..."></textarea>
-
-  <!-- 模擬貼文區 -->
-  <div class="ig-post">
-    <div class="header">
-      <img id="avatar" src="https://i.pravatar.cc/30" alt="avatar">
-      <b id="displayUsername">username</b>
-    </div>
-    <img id="postImage" class="post-img" src="https://via.placeholder.com/375x375" alt="post">
-    <div class="footer">
-      <img src="https://cdn-icons-png.flaticon.com/512/1077/1077035.png" alt="like">
-      <img src="https://cdn-icons-png.flaticon.com/512/1380/1380338.png" alt="comment">
-    </div>
-    <div class="caption">
-      <span id="captionUsername">username</span>
-      <span id="captionText">這是測試貼文</span>
-    </div>
+  <h2>IG Grid 模擬器 (3:4)</h2>
+  <div class="ig-grid">
+    <img src="https://via.placeholder.com/300x400" alt="">
+    <img src="https://via.placeholder.com/300x400" alt="">
+    <img src="https://via.placeholder.com/300x400" alt="">
+    <img src="https://via.placeholder.com/300x400" alt="">
+    <img src="https://via.placeholder.com/300x400" alt="">
+    <img src="https://via.placeholder.com/300x400" alt="">
+    <img src="https://via.placeholder.com/300x400" alt="">
+    <img src="https://via.placeholder.com/300x400" alt="">
+    <img src="https://via.placeholder.com/300x400" alt="">
   </div>
+</body>
+</html>
+
 
   <script src="script.js"></script>
 </body>

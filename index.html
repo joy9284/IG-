@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>IG 模擬器（Mobile）</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>IG 模擬器（裁切 3:4）</title>
 <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
 <style>
 :root{--w:390px;--muted:#8e8e8e;--bg:#fff}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",Arial;color:#111}
 .container{max-width:var(--w);width:100%;margin:0 auto;background:var(--bg);min-height:100vh;position:relative}
-
-/* topbar */
+/* top */
 .topbar{position:sticky;top:0;z-index:90;background:var(--bg);border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:10px}
 .username{font-weight:700;font-size:18px}
 .icon-btn{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-
 /* controls/profile/bio */
 .controls{display:flex;gap:8px;padding:8px;border-bottom:1px solid #f6f6f6;align-items:center}
 .btn{padding:8px 10px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:14px}
@@ -25,35 +23,26 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
 .edit-avatar{position:absolute;right:-4px;bottom:-4px;background:#111;color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .bio{padding:8px 12px;border-bottom:1px solid #f6f6f6}
 .bio p{margin:6px 0;line-height:1.35}
-
 /* highlights */
 .highlights{display:flex;gap:10px;padding:10px;overflow:auto;border-bottom:1px solid #f6f6f6}
 .hl-item{flex:0 0 auto;width:64px;text-align:center}
 .hl-figure{width:64px;height:64px;border-radius:50%;overflow:hidden;background:#eee;display:flex;align-items:center;justify-content:center;position:relative}
 .hl-figure img{width:100%;height:100%;object-fit:cover}
 .hl-title{font-size:12px;color:var(--muted);margin-top:6px}
-
-/* tabs/grid */
+/* grid */
 .tabs{display:flex;gap:16px;padding:8px 12px;border-bottom:1px solid #eee}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:4px}
 .grid-item{position:relative;width:100%;padding-top:125%;background:#eee;overflow:hidden;cursor:pointer}
 .grid-item img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .add-post{display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--muted);background:#fafafa;border:2px dashed #e6e6e6}
-
-/* post menu */
+/* menu & modals */
 .post-menu{position:fixed;background:#fff;border:1px solid #ddd;border-radius:8px;padding:6px;display:none;z-index:10001;box-shadow:0 8px 24px rgba(0,0,0,0.12)}
 .post-menu button{display:block;background:none;border:none;padding:8px 12px;width:100%;text-align:left;cursor:pointer}
-
-/* modals top layer */
 .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);z-index:9999}
 .modal-card{background:#fff;padding:12px;border-radius:10px;max-width:92%;max-height:90%;display:flex;flex-direction:column;align-items:center;position:relative;z-index:10000}
 #cropImg{max-width:90vw;max-height:70vh;display:block}
-
-/* floating add */
 .fixed-bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:var(--w);display:flex;justify-content:flex-end;padding:6px 12px;z-index:90;pointer-events:none}
 .float-btn{pointer-events:auto;padding:10px 12px;border-radius:999px;background:#fff;border:1px solid #ddd;cursor:pointer}
-
-/* utils */
 .hidden{display:none}
 .hidden-file{display:none}
 @media(min-width:420px){body{background:#eee}.container{margin-top:20px;border-radius:12px;overflow:hidden}}
@@ -61,8 +50,6 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
 </head>
 <body>
 <div class="container">
-
-  <!-- TOP -->
   <div class="topbar">
     <div class="username" id="usernameEl">mpf428k</div>
     <div style="display:flex;gap:8px;align-items:center">
@@ -72,17 +59,15 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
-  <!-- controls -->
   <div class="controls">
     <div class="btn" id="addPostBtn">＋ 新增貼文</div>
     <div style="flex:1"></div>
     <div class="btn" id="editProfileBtn">編輯個人檔案</div>
   </div>
 
-  <!-- profile -->
   <div class="profile">
     <div class="avatar-wrap">
-      <img id="avatarImg" class="avatar" src="" alt="avatar">
+      <img id="avatarImg" class="avatar" src="">
       <div class="edit-avatar" id="editAvatarBtn">+</div>
     </div>
     <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
@@ -94,7 +79,6 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
-  <!-- bio -->
   <div class="bio">
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div style="font-weight:700" id="displayName">使用者</div>
@@ -106,25 +90,21 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
-  <!-- highlights (3 empty slots) -->
   <div class="highlights" id="highlights"></div>
 
-  <!-- tabs -->
   <div class="tabs">
     <div class="tab active">▦</div>
     <div class="tab">🎞️</div>
     <div class="tab">👥</div>
   </div>
 
-  <!-- grid -->
   <div class="grid" id="grid"></div>
 
-  <!-- hidden files -->
+  <!-- hidden file inputs -->
   <input type="file" id="fileInput" accept="image/*" class="hidden-file">
   <input type="file" id="avatarFile" accept="image/*" class="hidden-file">
   <input type="file" id="hlFile" accept="image/*" class="hidden-file">
 
-  <!-- post action menu -->
   <div id="postMenu" class="post-menu" aria-hidden="true">
     <button id="pmReplace">更換圖片</button>
     <button id="pmCrop">裁切圖片</button>
@@ -132,7 +112,7 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     <button id="pmDelete">刪除貼文</button>
   </div>
 
-  <!-- crop modal -->
+  <!-- CROP modal -->
   <div id="cropModal" class="modal hidden" aria-hidden="true">
     <div class="modal-card">
       <img id="cropImg" src="">
@@ -143,7 +123,7 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
-  <!-- bio modal -->
+  <!-- BIO modal -->
   <div id="bioModal" class="modal hidden" aria-hidden="true">
     <div class="modal-card">
       <textarea id="bioInput" rows="6" style="width:320px;max-width:86vw;padding:8px;border:1px solid #ddd;border-radius:8px;"></textarea>
@@ -154,7 +134,7 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
-  <!-- highlight modal -->
+  <!-- HL modal -->
   <div id="hlModal" class="modal hidden" aria-hidden="true">
     <div class="modal-card">
       <div style="display:flex;gap:8px;align-items:center">
@@ -168,7 +148,6 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
-  <!-- floating add -->
   <div class="fixed-bottom">
     <div class="float-btn" id="floatingAdd">＋ 新增</div>
   </div>
@@ -177,10 +156,10 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
 
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 <script>
-/* LS keys */
+/* ====== LS ====== */
 const LS = { posts:'ig_posts_final', avatar:'ig_avatar_final', bio:'ig_bio_final', highlights:'ig_hl_final' };
 
-/* elements */
+/* ====== elements ====== */
 const gridEl = document.getElementById('grid');
 const highlightsEl = document.getElementById('highlights');
 const addTopBtn = document.getElementById('addTopBtn');
@@ -217,16 +196,16 @@ const usernameEl = document.getElementById('usernameEl');
 const editProfileBtn = document.getElementById('editProfileBtn');
 
 let cropper = null;
-let posts = JSON.parse(localStorage.getItem(LS.posts) || '[]'); // each {orig, display}
+let posts = JSON.parse(localStorage.getItem(LS.posts) || '[]');
 let highlights = JSON.parse(localStorage.getItem(LS.highlights) || '[]');
 let menuTarget = null; // {elem, idx}
-let cropContext = null; // {type, idx}
+let cropContext = null; // {type:'append'|'replace'|'avatar'|'hl', idx}
 
-/* helper */
+/* ===== util ===== */
 function saveAll(){ localStorage.setItem(LS.posts, JSON.stringify(posts)); localStorage.setItem(LS.highlights, JSON.stringify(highlights)); }
 function updatePostCount(){ document.getElementById('postCount').textContent = posts.length; }
 
-/* render highlights (initialize 3 empty slots if empty) */
+/* ===== highlights ===== */
 function ensureHighlightsSlots(){
   if(highlights.length < 3){
     const need = 3 - highlights.length;
@@ -254,7 +233,7 @@ function renderHighlights(){
   highlightsEl.appendChild(add);
 }
 
-/* render grid */
+/* ===== grid/render ===== */
 function renderGrid(){
   gridEl.innerHTML = '';
   posts.forEach((p, idx)=>{
@@ -267,6 +246,7 @@ function renderGrid(){
     div.addEventListener('drop', (e)=> { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'),10); const to = parseInt(div.dataset.idx,10); if(from===to) return; const item = posts.splice(from,1)[0]; posts.splice(to,0,item); saveAll(); renderGrid(); });
     gridEl.appendChild(div);
   });
+  // add card
   const addDiv = document.createElement('div'); addDiv.className='grid-item add-post';
   addDiv.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div style="text-align:center"><div style="font-size:28px">＋</div><div style="font-size:12px;color:var(--muted)">新增</div></div></div>';
   addDiv.addEventListener('click', ()=> { cropContext = {type:'append'}; fileInput.click(); });
@@ -274,7 +254,7 @@ function renderGrid(){
   updatePostCount();
 }
 
-/* post menu */
+/* ===== post menu ===== */
 function showPostMenu(elem, x, y, idx){
   menuTarget = {elem, idx};
   postMenu.style.display = 'block';
@@ -286,7 +266,7 @@ function showPostMenu(elem, x, y, idx){
 }
 document.addEventListener('click', (e)=> { if(!postMenu.contains(e.target)) postMenu.style.display='none'; });
 
-/* resize helper */
+/* ===== resize helper ===== */
 function resizeImageFile(file, maxW, cb){
   const reader = new FileReader();
   reader.onload = (e)=>{
@@ -303,24 +283,25 @@ function resizeImageFile(file, maxW, cb){
   reader.readAsDataURL(file);
 }
 
-/* cropper flow */
+/* ===== cropper: FIXED 3:4 ratio ===== */
 function openCrop(src, type, idx){
   cropContext = {type, idx};
   cropImg.src = src;
   cropModal.classList.remove('hidden');
   if(cropper) cropper.destroy();
-  cropper = new Cropper(cropImg, { aspectRatio: type==='avatar' ? 1 : 4/5, viewMode:1, autoCropArea:1, responsive:true });
+  // <<< FIXED RATIO 3:4 HERE >>>
+  cropper = new Cropper(cropImg, { aspectRatio: 3/4, viewMode:1, autoCropArea:1, responsive:true });
 }
 cropCancel.addEventListener('click', ()=> { cropModal.classList.add('hidden'); if(cropper){cropper.destroy(); cropper=null;} cropContext=null; });
 cropApply.addEventListener('click', ()=> {
   if(!cropper) return;
-  const opts = (cropContext && cropContext.type==='avatar') ? {width:300,height:300} : {width:400,height:500};
+  const opts = (cropContext && cropContext.type==='avatar') ? {width:300,height:300} : {width:600,height:800}; // output 3:4
   const canvas = cropper.getCroppedCanvas(opts);
   const data = canvas.toDataURL('image/jpeg',0.92);
 
   if(cropContext.type==='avatar'){
     avatarImg.src = data; localStorage.setItem(LS.avatar, data);
-  } else if(cropContext.type==='post' || cropContext.type==='append' || cropContext.type==='replace'){
+  } else if(cropContext.type==='append' || cropContext.type==='replace' || cropContext.type==='post'){
     if(cropContext.type==='append'){ posts.push({orig:cropImg.src, display:data}); }
     else if(cropContext.type==='replace'){ const i = cropContext.idx; posts[i] = posts[i] || {}; posts[i].orig = posts[i].orig || cropImg.src; posts[i].display = data; }
     else { const i = cropContext.idx; posts[i] = posts[i] || {}; posts[i].orig = posts[i].orig || cropImg.src; posts[i].display = data; }
@@ -334,7 +315,7 @@ cropApply.addEventListener('click', ()=> {
   cropContext=null;
 });
 
-/* file handlers */
+/* ===== file handlers ===== */
 fileInput.addEventListener('change', (e)=> {
   if(!e.target.files.length) return;
   const f = e.target.files[0];
@@ -345,12 +326,14 @@ fileInput.addEventListener('change', (e)=> {
   });
   fileInput.value='';
 });
+
+/* menu actions */
 pmReplace.addEventListener('click', ()=> { postMenu.style.display='none'; if(!menuTarget) return; cropContext = {type:'replace', idx: menuTarget.idx}; fileInput.click(); });
 pmCrop.addEventListener('click', ()=> { postMenu.style.display='none'; if(!menuTarget) return; const idx = menuTarget.idx; const src = posts[idx] && posts[idx].orig ? posts[idx].orig : posts[idx] && posts[idx].display; if(!src){ alert('此格沒有原始圖片可裁切'); return; } openCrop(src,'post', idx); });
 pmCopy.addEventListener('click', ()=> { postMenu.style.display='none'; if(!menuTarget) return; const idx = menuTarget.idx; posts.splice(idx+1,0, JSON.parse(JSON.stringify(posts[idx]||{}))); saveAll(); renderGrid(); });
 pmDelete.addEventListener('click', ()=> { postMenu.style.display='none'; if(!menuTarget) return; const idx = menuTarget.idx; if(confirm('確定刪除？')){ posts.splice(idx,1); saveAll(); renderGrid(); } });
 
-/* avatar */
+/* ===== avatar flow ===== */
 editAvatarBtn.addEventListener('click', ()=> { cropContext = {type:'avatar'}; avatarFile.click(); });
 avatarFile.addEventListener('change', (e)=> {
   if(!e.target.files.length) return;
@@ -358,7 +341,7 @@ avatarFile.addEventListener('change', (e)=> {
   avatarFile.value='';
 });
 
-/* highlights */
+/* ===== highlights flow ===== */
 function openHLNew(){ hlPreview.src=''; hlTitle.value=''; hlModal.classList.remove('hidden'); cropContext = {type:'hl_new'}; }
 function openHLEdit(i){ hlPreview.src = highlights[i].cover || ''; hlTitle.value = highlights[i].title || ''; hlModal.classList.remove('hidden'); cropContext = {type:'hl_edit', idx:i}; }
 hlPreview.addEventListener('click', ()=> hlFile.click());
@@ -366,17 +349,18 @@ hlFile.addEventListener('change', (e)=> { if(!e.target.files.length) return; res
 hlSave.addEventListener('click', ()=> { const title = hlTitle.value || '精選'; const cover = hlPreview.src || ''; if(!cover){ alert('請先上傳或裁切封面'); return; } if(cropContext.type==='hl_new'){ highlights.push({title, cover}); } else if(cropContext.type==='hl_edit'){ highlights[cropContext.idx] = {title, cover}; } saveAll(); renderHighlights(); hlModal.classList.add('hidden'); cropContext=null; });
 hlCancel.addEventListener('click', ()=> { hlModal.classList.add('hidden'); cropContext=null; });
 
-/* bio */
+/* ===== bio flow ===== */
 editBioBtn.addEventListener('click', ()=> { bioModal.classList.remove('hidden'); bioInput.value = (localStorage.getItem(LS.bio) || '').replace(/<br\s*\/?>/g,"\n"); });
 bioSave.addEventListener('click', ()=> { const v = bioInput.value.replace(/\n/g,'<br>'); localStorage.setItem(LS.bio, v); bioText.innerHTML = v; bioModal.classList.add('hidden'); });
 bioCancel.addEventListener('click', ()=> bioModal.classList.add('hidden'));
 
-/* add buttons */
-document.getElementById('addPostBtn').addEventListener('click', ()=> { cropContext={type:'append'}; fileInput.click(); });
+/* ===== add triggers ===== */
+addPostBtn.addEventListener('click', ()=> { cropContext={type:'append'}; fileInput.click(); });
 addTopBtn.addEventListener('click', ()=> { cropContext={type:'append'}; fileInput.click(); });
 floatingAdd.addEventListener('click', ()=> { cropContext={type:'append'}; fileInput.click(); });
 
-/* export simple */
+/* ===== helpers: export & load image ===== */
+function loadImage(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(); i.src=src; }); }
 document.getElementById('downloadBtn')?.addEventListener('click', async ()=> {
   const cols = 3; const rows = Math.ceil(posts.length/cols) || 1;
   const cellW = 400; const cellH = 500;
@@ -384,15 +368,11 @@ document.getElementById('downloadBtn')?.addEventListener('click', async ()=> {
   const ctx = canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
   for(let i=0;i<posts.length;i++){
     const src = posts[i].display || posts[i].orig; if(!src) continue;
-    try{ const img = await loadImage(src); const dx = (i%cols)*cellW, dy = Math.floor(i/cols)*cellH; const ar = img.width/img.height; const tar = cellW/cellH; let sx=0,sy=0,sw=img.width,sh=img.height; if(ar>tar){ sh = img.height; sw = Math.round(sh*tar); sx = Math.round((img.width-sw)/2); } else { sw = img.width; sh = Math.round(sw/tar); sy = Math.round((img.height-sh)/2); } ctx.drawImage(img, sx, sy, sw, sh, dx, dy, cellW, cellH); }catch(e){}
-  }
+    try{ const img = await loadImage(src); const dx = (i%cols)*cellW, dy = Math.floor(i/cols)*cellH; const ar = img.width/img.height; const tar = cellW/cellH; let sx=0,sy=0,sw=img.width,sh=img.height; if(ar>tar){ sh = img.height; sw = Math.round(sh*tar); sx = Math.round((img.width-sw)/2); } else { sw = img.width; sh = Math.round(sw/tar); sy = Math.round((img.height-sh)/2); } ctx.drawImage(img, sx, sy, sw, sh, dx, dy, cellW, cellH); }catch(e){} }
   const url = canvas.toDataURL('image/jpeg',0.92); const a = document.createElement('a'); a.href = url; a.download = 'ig_sim_export.jpg'; a.click();
 });
 
-/* helpers */
-function loadImage(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(); i.src=src; }); }
-
-/* boot */
+/* ===== boot ===== */
 (function boot(){
   avatarImg.src = localStorage.getItem(LS.avatar) || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="100%" height="100%" fill="%23ddd"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23888" font-size="20">頭貼</text></svg>';
   bioText.innerHTML = localStorage.getItem(LS.bio) || '';

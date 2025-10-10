@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>IG 模擬器（裁切 3:4）</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>IG 模擬器（3:4 裁切、無限貼文）</title>
+
+<!-- Cropper -->
 <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
+
 <style>
 :root{--w:390px;--muted:#8e8e8e;--bg:#fff}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",Arial;color:#111}
 .container{max-width:var(--w);width:100%;margin:0 auto;background:var(--bg);min-height:100vh;position:relative}
+
 /* top */
 .topbar{position:sticky;top:0;z-index:90;background:var(--bg);border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:10px}
 .username{font-weight:700;font-size:18px}
 .icon-btn{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
 /* controls/profile/bio */
 .controls{display:flex;gap:8px;padding:8px;border-bottom:1px solid #f6f6f6;align-items:center}
 .btn{padding:8px 10px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:14px}
@@ -21,35 +26,48 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
 .avatar-wrap{width:86px;height:86px;position:relative;flex:0 0 86px}
 .avatar{width:86px;height:86px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,0.06)}
 .edit-avatar{position:absolute;right:-4px;bottom:-4px;background:#111;color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.profile-stats{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+/* bio */
 .bio{padding:8px 12px;border-bottom:1px solid #f6f6f6}
 .bio p{margin:6px 0;line-height:1.35}
+
 /* highlights */
 .highlights{display:flex;gap:10px;padding:10px;overflow:auto;border-bottom:1px solid #f6f6f6}
 .hl-item{flex:0 0 auto;width:64px;text-align:center}
 .hl-figure{width:64px;height:64px;border-radius:50%;overflow:hidden;background:#eee;display:flex;align-items:center;justify-content:center;position:relative}
 .hl-figure img{width:100%;height:100%;object-fit:cover}
 .hl-title{font-size:12px;color:var(--muted);margin-top:6px}
-/* grid */
+
+/* tabs + grid */
 .tabs{display:flex;gap:16px;padding:8px 12px;border-bottom:1px solid #eee}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:4px}
 .grid-item{position:relative;width:100%;padding-top:125%;background:#eee;overflow:hidden;cursor:pointer}
 .grid-item img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .add-post{display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--muted);background:#fafafa;border:2px dashed #e6e6e6}
-/* menu & modals */
-.post-menu{position:fixed;background:#fff;border:1px solid #ddd;border-radius:8px;padding:6px;display:none;z-index:10001;box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+
+/* menu & modals - ensure top layer */
+.post-menu{position:fixed;background:#fff;border:1px solid #ddd;border-radius:8px;padding:6px;display:none;z-index:10002;box-shadow:0 8px 24px rgba(0,0,0,0.12)}
 .post-menu button{display:block;background:none;border:none;padding:8px 12px;width:100%;text-align:left;cursor:pointer}
-.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);z-index:9999}
-.modal-card{background:#fff;padding:12px;border-radius:10px;max-width:92%;max-height:90%;display:flex;flex-direction:column;align-items:center;position:relative;z-index:10000}
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);z-index:10000}
+.modal-card{background:#fff;padding:12px;border-radius:10px;max-width:92%;max-height:90%;display:flex;flex-direction:column;align-items:center;position:relative;z-index:10001}
 #cropImg{max-width:90vw;max-height:70vh;display:block}
+
+/* floating add */
 .fixed-bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:var(--w);display:flex;justify-content:flex-end;padding:6px 12px;z-index:90;pointer-events:none}
 .float-btn{pointer-events:auto;padding:10px 12px;border-radius:999px;background:#fff;border:1px solid #ddd;cursor:pointer}
+
+/* utils */
 .hidden{display:none}
 .hidden-file{display:none}
+small{color:var(--muted)}
 @media(min-width:420px){body{background:#eee}.container{margin-top:20px;border-radius:12px;overflow:hidden}}
 </style>
 </head>
 <body>
 <div class="container">
+
+  <!-- TOPBAR -->
   <div class="topbar">
     <div class="username" id="usernameEl">mpf428k</div>
     <div style="display:flex;gap:8px;align-items:center">
@@ -59,52 +77,59 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
+  <!-- CONTROLS -->
   <div class="controls">
     <div class="btn" id="addPostBtn">＋ 新增貼文</div>
     <div style="flex:1"></div>
     <div class="btn" id="editProfileBtn">編輯個人檔案</div>
   </div>
 
+  <!-- PROFILE -->
   <div class="profile">
     <div class="avatar-wrap">
-      <img id="avatarImg" class="avatar" src="">
-      <div class="edit-avatar" id="editAvatarBtn">+</div>
+      <img id="avatarImg" class="avatar" src="" alt="頭貼">
+      <div class="edit-avatar" id="editAvatarBtn" title="更換頭貼">＋</div>
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
-      <div style="display:flex;gap:16px">
+    <div class="profile-stats">
+      <div style="display:flex;gap:16px;align-items:center">
         <div><div style="font-weight:700" id="postCount">0</div><div style="color:var(--muted)">貼文</div></div>
         <div><div style="font-weight:700" id="followers">0</div><div style="color:var(--muted)">位粉絲</div></div>
         <div><div style="font-weight:700" id="following">0</div><div style="color:var(--muted)">追蹤中</div></div>
       </div>
+      <div style="margin-top:8px">
+        <div style="font-weight:700" id="displayName">使用者</div>
+        <small id="displayHandle">@username</small>
+      </div>
     </div>
   </div>
 
+  <!-- BIO -->
   <div class="bio">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
-      <div style="font-weight:700" id="displayName">使用者</div>
-      <div style="color:var(--muted)" id="displayHandle">@username</div>
-    </div>
     <p id="bioText"></p>
     <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn" id="editBioBtn">編輯自介</button>
     </div>
   </div>
 
+  <!-- HIGHLIGHTS -->
   <div class="highlights" id="highlights"></div>
 
+  <!-- TABS -->
   <div class="tabs">
     <div class="tab active">▦</div>
     <div class="tab">🎞️</div>
     <div class="tab">👥</div>
   </div>
 
+  <!-- GRID -->
   <div class="grid" id="grid"></div>
 
-  <!-- hidden file inputs -->
-  <input type="file" id="fileInput" accept="image/*" class="hidden-file">
-  <input type="file" id="avatarFile" accept="image/*" class="hidden-file">
-  <input type="file" id="hlFile" accept="image/*" class="hidden-file">
+  <!-- Hidden file inputs -->
+  <input type="file" id="fileInput" accept="image/*" class="hidden-file" />
+  <input type="file" id="avatarFile" accept="image/*" class="hidden-file" />
+  <input type="file" id="hlFile" accept="image/*" class="hidden-file" />
 
+  <!-- Post action menu -->
   <div id="postMenu" class="post-menu" aria-hidden="true">
     <button id="pmReplace">更換圖片</button>
     <button id="pmCrop">裁切圖片</button>
@@ -112,10 +137,10 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     <button id="pmDelete">刪除貼文</button>
   </div>
 
-  <!-- CROP modal -->
+  <!-- CROP MODAL -->
   <div id="cropModal" class="modal hidden" aria-hidden="true">
     <div class="modal-card">
-      <img id="cropImg" src="">
+      <img id="cropImg" src="" alt="裁切預覽">
       <div style="margin-top:10px;display:flex;gap:8px">
         <button id="cropCancel" class="btn">取消</button>
         <button id="cropApply" class="btn">確定裁切</button>
@@ -123,7 +148,7 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
-  <!-- BIO modal -->
+  <!-- BIO MODAL -->
   <div id="bioModal" class="modal hidden" aria-hidden="true">
     <div class="modal-card">
       <textarea id="bioInput" rows="6" style="width:320px;max-width:86vw;padding:8px;border:1px solid #ddd;border-radius:8px;"></textarea>
@@ -134,7 +159,7 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
     </div>
   </div>
 
-  <!-- HL modal -->
+  <!-- HL MODAL -->
   <div id="hlModal" class="modal hidden" aria-hidden="true">
     <div class="modal-card">
       <div style="display:flex;gap:8px;align-items:center">
@@ -154,12 +179,29 @@ html,body{margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkM
 
 </div>
 
+<!-- Cropper JS -->
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
-<script>
-/* ====== LS ====== */
-const LS = { posts:'ig_posts_final', avatar:'ig_avatar_final', bio:'ig_bio_final', highlights:'ig_hl_final' };
 
-/* ====== elements ====== */
+<script>
+/* ===========================
+   IG 模擬器核心（單檔）
+   - 固定 3:4 裁切
+   - 新貼文放最上面 (unshift)
+   - 支援無限貼文 & 拖曳重新排序
+   - localStorage 記憶：posts, avatar, bio, highlights
+   - crop modal 永遠最上層 (z-index)
+   =========================== */
+
+const LS = {
+  posts: 'ig_posts_v2',
+  avatar: 'ig_avatar_v2',
+  bio: 'ig_bio_v2',
+  highlights: 'ig_hl_v2',
+  displayName: 'ig_name_v2',
+  displayHandle: 'ig_handle_v2'
+};
+
+/* Elements */
 const gridEl = document.getElementById('grid');
 const highlightsEl = document.getElementById('highlights');
 const addTopBtn = document.getElementById('addTopBtn');
@@ -167,14 +209,9 @@ const addPostBtn = document.getElementById('addPostBtn');
 const floatingAdd = document.getElementById('floatingAdd');
 const fileInput = document.getElementById('fileInput');
 const avatarFile = document.getElementById('avatarFile');
+const hlFile = document.getElementById('hlFile');
 const avatarImg = document.getElementById('avatarImg');
 const editAvatarBtn = document.getElementById('editAvatarBtn');
-const bioText = document.getElementById('bioText');
-const editBioBtn = document.getElementById('editBioBtn');
-const bioModal = document.getElementById('bioModal');
-const bioInput = document.getElementById('bioInput');
-const bioSave = document.getElementById('bioSave');
-const bioCancel = document.getElementById('bioCancel');
 const postMenu = document.getElementById('postMenu');
 const pmReplace = document.getElementById('pmReplace');
 const pmCrop = document.getElementById('pmCrop');
@@ -184,7 +221,12 @@ const cropModal = document.getElementById('cropModal');
 const cropImg = document.getElementById('cropImg');
 const cropCancel = document.getElementById('cropCancel');
 const cropApply = document.getElementById('cropApply');
-const hlFile = document.getElementById('hlFile');
+const bioModal = document.getElementById('bioModal');
+const bioInput = document.getElementById('bioInput');
+const bioSave = document.getElementById('bioSave');
+const bioCancel = document.getElementById('bioCancel');
+const bioText = document.getElementById('bioText');
+const editBioBtn = document.getElementById('editBioBtn');
 const hlModal = document.getElementById('hlModal');
 const hlPreview = document.getElementById('hlPreview');
 const hlTitle = document.getElementById('hlTitle');
@@ -196,23 +238,28 @@ const usernameEl = document.getElementById('usernameEl');
 const editProfileBtn = document.getElementById('editProfileBtn');
 
 let cropper = null;
-let posts = JSON.parse(localStorage.getItem(LS.posts) || '[]');
+let posts = JSON.parse(localStorage.getItem(LS.posts) || '[]'); // [{orig, display}]
 let highlights = JSON.parse(localStorage.getItem(LS.highlights) || '[]');
 let menuTarget = null; // {elem, idx}
 let cropContext = null; // {type:'append'|'replace'|'avatar'|'hl', idx}
 
-/* ===== util ===== */
-function saveAll(){ localStorage.setItem(LS.posts, JSON.stringify(posts)); localStorage.setItem(LS.highlights, JSON.stringify(highlights)); }
+/* ---------- utilities ---------- */
+function saveAll(){
+  localStorage.setItem(LS.posts, JSON.stringify(posts));
+  localStorage.setItem(LS.highlights, JSON.stringify(highlights));
+}
 function updatePostCount(){ document.getElementById('postCount').textContent = posts.length; }
 
-/* ===== highlights ===== */
-function ensureHighlightsSlots(){
-  if(highlights.length < 3){
-    const need = 3 - highlights.length;
-    for(let i=0;i<need;i++) highlights.push({title:'', cover:''});
+/* ensure highlight slots */
+function ensureHighlightsSlots(n=3){
+  if(!Array.isArray(highlights)) highlights = [];
+  if(highlights.length < n){
+    for(let i=highlights.length;i<n;i++) highlights.push({title:'', cover:''});
     localStorage.setItem(LS.highlights, JSON.stringify(highlights));
   }
 }
+
+/* ---------- render highlights ---------- */
 function renderHighlights(){
   highlightsEl.innerHTML = '';
   highlights.forEach((h,i)=>{
@@ -225,6 +272,7 @@ function renderHighlights(){
     item.addEventListener('click', ()=> openHLEdit(i));
     highlightsEl.appendChild(item);
   });
+  // add action
   const add = document.createElement('div'); add.className='hl-item';
   const addFig = document.createElement('div'); addFig.className='hl-figure'; addFig.style.border='2px dashed #eee'; addFig.style.display='flex'; addFig.style.alignItems='center'; addFig.style.justifyContent='center'; addFig.textContent='＋';
   const addTitle = document.createElement('div'); addTitle.className='hl-title'; addTitle.textContent='新增';
@@ -233,28 +281,44 @@ function renderHighlights(){
   highlightsEl.appendChild(add);
 }
 
-/* ===== grid/render ===== */
+/* ---------- render grid (posts newest first) ---------- */
 function renderGrid(){
   gridEl.innerHTML = '';
   posts.forEach((p, idx)=>{
     const div = document.createElement('div'); div.className='grid-item'; div.draggable = true; div.dataset.idx = idx;
     const img = document.createElement('img'); img.src = p.display || '';
     div.appendChild(img);
-    div.addEventListener('click', (e)=> showPostMenu(div, e.clientX, e.clientY, idx));
+
+    div.addEventListener('click', (e)=> {
+      showPostMenu(div, e.clientX, e.clientY, idx);
+    });
+
+    // drag/drop reorder
     div.addEventListener('dragstart', (e)=> e.dataTransfer.setData('text/plain', idx));
     div.addEventListener('dragover', (e)=> e.preventDefault());
-    div.addEventListener('drop', (e)=> { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'),10); const to = parseInt(div.dataset.idx,10); if(from===to) return; const item = posts.splice(from,1)[0]; posts.splice(to,0,item); saveAll(); renderGrid(); });
+    div.addEventListener('drop', (e)=> {
+      e.preventDefault();
+      const from = parseInt(e.dataTransfer.getData('text/plain'),10);
+      const to = parseInt(div.dataset.idx,10);
+      if(from===to) return;
+      const item = posts.splice(from,1)[0];
+      posts.splice(to,0,item);
+      saveAll(); renderGrid();
+    });
+
     gridEl.appendChild(div);
   });
-  // add card
+
+  // add "新增" card at the end
   const addDiv = document.createElement('div'); addDiv.className='grid-item add-post';
   addDiv.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div style="text-align:center"><div style="font-size:28px">＋</div><div style="font-size:12px;color:var(--muted)">新增</div></div></div>';
   addDiv.addEventListener('click', ()=> { cropContext = {type:'append'}; fileInput.click(); });
   gridEl.appendChild(addDiv);
+
   updatePostCount();
 }
 
-/* ===== post menu ===== */
+/* ---------- post menu ---------- */
 function showPostMenu(elem, x, y, idx){
   menuTarget = {elem, idx};
   postMenu.style.display = 'block';
@@ -264,9 +328,11 @@ function showPostMenu(elem, x, y, idx){
   if(top + 140 > vh) top = vh - 160;
   postMenu.style.left = left + 'px'; postMenu.style.top = top + 'px';
 }
-document.addEventListener('click', (e)=> { if(!postMenu.contains(e.target)) postMenu.style.display='none'; });
+document.addEventListener('click', (e)=>{
+  if(!postMenu.contains(e.target)) postMenu.style.display='none';
+});
 
-/* ===== resize helper ===== */
+/* ---------- resize helper (prevent huge images) ---------- */
 function resizeImageFile(file, maxW, cb){
   const reader = new FileReader();
   reader.onload = (e)=>{
@@ -276,109 +342,202 @@ function resizeImageFile(file, maxW, cb){
       if(w > maxW){ const r = w/h; w = maxW; h = Math.round(w / r); }
       const c = document.createElement('canvas'); c.width = w; c.height = h;
       c.getContext('2d').drawImage(img,0,0,w,h);
-      cb(c.toDataURL('image/jpeg',0.85));
+      cb(c.toDataURL('image/jpeg',0.9));
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-/* ===== cropper: FIXED 3:4 ratio ===== */
+/* ---------- crop flow (FIXED 3:4 ratio) ---------- */
 function openCrop(src, type, idx){
   cropContext = {type, idx};
   cropImg.src = src;
   cropModal.classList.remove('hidden');
   if(cropper) cropper.destroy();
-  // <<< FIXED RATIO 3:4 HERE >>>
-  cropper = new Cropper(cropImg, { aspectRatio: 3/4, viewMode:1, autoCropArea:1, responsive:true });
+  cropper = new Cropper(cropImg, {
+    aspectRatio: 3/4,
+    viewMode: 1,
+    autoCropArea: 1,
+    responsive: true,
+    background: false
+  });
 }
-cropCancel.addEventListener('click', ()=> { cropModal.classList.add('hidden'); if(cropper){cropper.destroy(); cropper=null;} cropContext=null; });
+cropCancel.addEventListener('click', ()=> {
+  cropModal.classList.add('hidden');
+  if(cropper){ cropper.destroy(); cropper = null; }
+  cropContext = null;
+});
 cropApply.addEventListener('click', ()=> {
   if(!cropper) return;
-  const opts = (cropContext && cropContext.type==='avatar') ? {width:300,height:300} : {width:600,height:800}; // output 3:4
+  // output size: keep decent resolution
+  const opts = (cropContext && cropContext.type==='avatar') ? {width:400,height:400} : {width:900,height:1200}; // 3:4 => 900x1200
   const canvas = cropper.getCroppedCanvas(opts);
   const data = canvas.toDataURL('image/jpeg',0.92);
 
-  if(cropContext.type==='avatar'){
-    avatarImg.src = data; localStorage.setItem(LS.avatar, data);
-  } else if(cropContext.type==='append' || cropContext.type==='replace' || cropContext.type==='post'){
-    if(cropContext.type==='append'){ posts.push({orig:cropImg.src, display:data}); }
-    else if(cropContext.type==='replace'){ const i = cropContext.idx; posts[i] = posts[i] || {}; posts[i].orig = posts[i].orig || cropImg.src; posts[i].display = data; }
-    else { const i = cropContext.idx; posts[i] = posts[i] || {}; posts[i].orig = posts[i].orig || cropImg.src; posts[i].display = data; }
+  if(cropContext.type === 'avatar'){
+    avatarImg.src = data;
+    localStorage.setItem(LS.avatar, data);
+  } else if(cropContext.type === 'append'){
+    // new post on top
+    posts.unshift({ orig: cropImg.src, display: data });
     saveAll(); renderGrid();
-  } else if(cropContext.type==='hl'){
-    hlPreview.src = data; hlModal.classList.remove('hidden'); cropModal.classList.add('hidden');
+  } else if(cropContext.type === 'replace'){
+    const i = cropContext.idx;
+    posts[i] = posts[i] || {};
+    posts[i].orig = posts[i].orig || cropImg.src;
+    posts[i].display = data;
+    saveAll(); renderGrid();
+  } else if(cropContext.type === 'post'){
+    const i = cropContext.idx;
+    posts[i] = posts[i] || {};
+    posts[i].orig = posts[i].orig || cropImg.src;
+    posts[i].display = data;
+    saveAll(); renderGrid();
+  } else if(cropContext.type === 'hl' || cropContext.type === 'hl_new' || cropContext.type === 'hl_edit'){
+    // set preview (user must press save to persist)
+    hlPreview.src = data;
+    // show hl modal if not visible
+    hlModal.classList.remove('hidden');
   }
 
+  // cleanup
   cropModal.classList.add('hidden');
-  if(cropper){cropper.destroy(); cropper=null;}
-  cropContext=null;
+  if(cropper){ cropper.destroy(); cropper = null; }
+  cropContext = null;
 });
 
-/* ===== file handlers ===== */
+/* ---------- file inputs ---------- */
 fileInput.addEventListener('change', (e)=> {
   if(!e.target.files.length) return;
   const f = e.target.files[0];
-  resizeImageFile(f, 1200, (dataUrl)=>{
-    if(cropContext && cropContext.type==='replace'){ openCrop(dataUrl,'post', cropContext.idx); }
-    else if(cropContext && cropContext.type==='append'){ openCrop(dataUrl,'post', null); }
-    else { cropContext = {type:'append'}; openCrop(dataUrl,'post', null); }
+  // resize to reasonable size, then pass dataUrl to cropper
+  resizeImageFile(f, 1600, (dataUrl)=>{
+    // If user initiated replace/append flow already set cropContext
+    if(cropContext && cropContext.type==='replace'){
+      openCrop(dataUrl,'post', cropContext.idx);
+    } else if(cropContext && cropContext.type==='append'){
+      openCrop(dataUrl,'post', null);
+    } else {
+      // default: append
+      cropContext = {type:'append'};
+      openCrop(dataUrl,'post', null);
+    }
   });
   fileInput.value='';
 });
 
-/* menu actions */
-pmReplace.addEventListener('click', ()=> { postMenu.style.display='none'; if(!menuTarget) return; cropContext = {type:'replace', idx: menuTarget.idx}; fileInput.click(); });
-pmCrop.addEventListener('click', ()=> { postMenu.style.display='none'; if(!menuTarget) return; const idx = menuTarget.idx; const src = posts[idx] && posts[idx].orig ? posts[idx].orig : posts[idx] && posts[idx].display; if(!src){ alert('此格沒有原始圖片可裁切'); return; } openCrop(src,'post', idx); });
-pmCopy.addEventListener('click', ()=> { postMenu.style.display='none'; if(!menuTarget) return; const idx = menuTarget.idx; posts.splice(idx+1,0, JSON.parse(JSON.stringify(posts[idx]||{}))); saveAll(); renderGrid(); });
-pmDelete.addEventListener('click', ()=> { postMenu.style.display='none'; if(!menuTarget) return; const idx = menuTarget.idx; if(confirm('確定刪除？')){ posts.splice(idx,1); saveAll(); renderGrid(); } });
+/* ---------- post menu actions ---------- */
+pmReplace.addEventListener('click', ()=> {
+  postMenu.style.display='none';
+  if(!menuTarget) return;
+  cropContext = { type:'replace', idx: menuTarget.idx };
+  fileInput.click();
+});
+pmCrop.addEventListener('click', ()=> {
+  postMenu.style.display='none';
+  if(!menuTarget) return;
+  const idx = menuTarget.idx;
+  const src = posts[idx] && posts[idx].orig ? posts[idx].orig : posts[idx] && posts[idx].display;
+  if(!src){ alert('此格沒有原始圖片可裁切'); return; }
+  openCrop(src,'post', idx);
+});
+pmCopy.addEventListener('click', ()=> {
+  postMenu.style.display='none';
+  if(!menuTarget) return;
+  const idx = menuTarget.idx;
+  posts.splice(idx,0, JSON.parse(JSON.stringify(posts[idx]||{}))); // duplicate at same place
+  saveAll(); renderGrid();
+});
+pmDelete.addEventListener('click', ()=> {
+  postMenu.style.display='none';
+  if(!menuTarget) return;
+  const idx = menuTarget.idx;
+  if(confirm('確定刪除這則貼文？')){
+    posts.splice(idx,1);
+    saveAll(); renderGrid();
+  }
+});
 
-/* ===== avatar flow ===== */
+/* ---------- avatar flow ---------- */
 editAvatarBtn.addEventListener('click', ()=> { cropContext = {type:'avatar'}; avatarFile.click(); });
 avatarFile.addEventListener('change', (e)=> {
   if(!e.target.files.length) return;
-  resizeImageFile(e.target.files[0], 1200, (dataUrl)=> openCrop(dataUrl,'avatar',null));
+  resizeImageFile(e.target.files[0], 1600, (dataUrl)=> openCrop(dataUrl,'avatar',null));
   avatarFile.value='';
 });
 
-/* ===== highlights flow ===== */
+/* ---------- highlights flow ---------- */
 function openHLNew(){ hlPreview.src=''; hlTitle.value=''; hlModal.classList.remove('hidden'); cropContext = {type:'hl_new'}; }
 function openHLEdit(i){ hlPreview.src = highlights[i].cover || ''; hlTitle.value = highlights[i].title || ''; hlModal.classList.remove('hidden'); cropContext = {type:'hl_edit', idx:i}; }
-hlPreview.addEventListener('click', ()=> hlFile.click());
-hlFile.addEventListener('change', (e)=> { if(!e.target.files.length) return; resizeImageFile(e.target.files[0], 1200, (dataUrl)=> openCrop(dataUrl,'hl',null)); hlFile.value=''; });
-hlSave.addEventListener('click', ()=> { const title = hlTitle.value || '精選'; const cover = hlPreview.src || ''; if(!cover){ alert('請先上傳或裁切封面'); return; } if(cropContext.type==='hl_new'){ highlights.push({title, cover}); } else if(cropContext.type==='hl_edit'){ highlights[cropContext.idx] = {title, cover}; } saveAll(); renderHighlights(); hlModal.classList.add('hidden'); cropContext=null; });
-hlCancel.addEventListener('click', ()=> { hlModal.classList.add('hidden'); cropContext=null; });
 
-/* ===== bio flow ===== */
-editBioBtn.addEventListener('click', ()=> { bioModal.classList.remove('hidden'); bioInput.value = (localStorage.getItem(LS.bio) || '').replace(/<br\s*\/?>/g,"\n"); });
-bioSave.addEventListener('click', ()=> { const v = bioInput.value.replace(/\n/g,'<br>'); localStorage.setItem(LS.bio, v); bioText.innerHTML = v; bioModal.classList.add('hidden'); });
+hlPreview.addEventListener('click', ()=> hlFile.click());
+hlFile.addEventListener('change', (e)=> {
+  if(!e.target.files.length) return;
+  resizeImageFile(e.target.files[0], 1600, (dataUrl)=> openCrop(dataUrl,'hl',null));
+  hlFile.value='';
+});
+hlSave.addEventListener('click', ()=> {
+  const title = hlTitle.value.trim() || '精選';
+  const cover = hlPreview.src || '';
+  if(!cover){ alert('請先上傳或裁切封面'); return; }
+
+  if(cropContext && cropContext.type === 'hl_new'){
+    highlights.push({ title, cover });
+  } else if(cropContext && cropContext.type === 'hl_edit'){
+    highlights[cropContext.idx] = { title, cover };
+  }
+  saveAll(); renderHighlights();
+  hlModal.classList.add('hidden');
+  cropContext = null;
+});
+hlCancel.addEventListener('click', ()=> { hlModal.classList.add('hidden'); cropContext = null; });
+
+/* ---------- bio flow ---------- */
+editBioBtn.addEventListener('click', ()=> {
+  bioInput.value = (localStorage.getItem(LS.bio) || '').replace(/<br\s*\/?>/g,"\n");
+  bioModal.classList.remove('hidden');
+});
+bioSave.addEventListener('click', ()=> {
+  const v = bioInput.value.replace(/\n/g,'<br>');
+  localStorage.setItem(LS.bio, v);
+  bioText.innerHTML = v;
+  bioModal.classList.add('hidden');
+});
 bioCancel.addEventListener('click', ()=> bioModal.classList.add('hidden'));
 
-/* ===== add triggers ===== */
+/* ---------- profile edit ---------- */
+editProfileBtn.addEventListener('click', ()=> {
+  const name = prompt('顯示名稱', displayName.textContent) ?? displayName.textContent;
+  const handle = prompt('帳號（含@）', displayHandle.textContent) ?? displayHandle.textContent;
+  displayName.textContent = name;
+  displayHandle.textContent = handle;
+  localStorage.setItem(LS.displayName, name);
+  localStorage.setItem(LS.displayHandle, handle);
+});
+
+/* ---------- quick add triggers ---------- */
 addPostBtn.addEventListener('click', ()=> { cropContext={type:'append'}; fileInput.click(); });
 addTopBtn.addEventListener('click', ()=> { cropContext={type:'append'}; fileInput.click(); });
 floatingAdd.addEventListener('click', ()=> { cropContext={type:'append'}; fileInput.click(); });
 
-/* ===== helpers: export & load image ===== */
+/* ---------- helpers ---------- */
 function loadImage(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(); i.src=src; }); }
-document.getElementById('downloadBtn')?.addEventListener('click', async ()=> {
-  const cols = 3; const rows = Math.ceil(posts.length/cols) || 1;
-  const cellW = 400; const cellH = 500;
-  const canvas = document.createElement('canvas'); canvas.width = cols*cellW; canvas.height = rows*cellH;
-  const ctx = canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  for(let i=0;i<posts.length;i++){
-    const src = posts[i].display || posts[i].orig; if(!src) continue;
-    try{ const img = await loadImage(src); const dx = (i%cols)*cellW, dy = Math.floor(i/cols)*cellH; const ar = img.width/img.height; const tar = cellW/cellH; let sx=0,sy=0,sw=img.width,sh=img.height; if(ar>tar){ sh = img.height; sw = Math.round(sh*tar); sx = Math.round((img.width-sw)/2); } else { sw = img.width; sh = Math.round(sw/tar); sy = Math.round((img.height-sh)/2); } ctx.drawImage(img, sx, sy, sw, sh, dx, dy, cellW, cellH); }catch(e){} }
-  const url = canvas.toDataURL('image/jpeg',0.92); const a = document.createElement('a'); a.href = url; a.download = 'ig_sim_export.jpg'; a.click();
-});
 
-/* ===== boot ===== */
+/* ---------- boot (init) ---------- */
 (function boot(){
+  // restore avatar
   avatarImg.src = localStorage.getItem(LS.avatar) || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="100%" height="100%" fill="%23ddd"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23888" font-size="20">頭貼</text></svg>';
+
+  // restore bio & profile
   bioText.innerHTML = localStorage.getItem(LS.bio) || '';
+  displayName.textContent = localStorage.getItem(LS.displayName) || displayName.textContent;
+  displayHandle.textContent = localStorage.getItem(LS.displayHandle) || displayHandle.textContent;
+
+  // restore posts/highlights
   posts = JSON.parse(localStorage.getItem(LS.posts) || '[]');
   highlights = JSON.parse(localStorage.getItem(LS.highlights) || '[]');
-  ensureHighlightsSlots();
+  ensureHighlightsSlots(3);
   renderHighlights();
   renderGrid();
 })();

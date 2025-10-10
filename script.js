@@ -33,8 +33,9 @@
       font-weight: 600;
     }
     .add-btn {
-      font-size: 24px;
+      font-size: 28px;
       cursor: pointer;
+      user-select: none;
     }
     .posts {
       margin-top: 70px;
@@ -44,24 +45,27 @@
       flex-direction: column;
       gap: 20px;
       padding: 10px;
+      box-sizing: border-box;
     }
     .post {
       width: 100%;
-      aspect-ratio: 3/4;
+      aspect-ratio: 3 / 4;
       background: #f0f0f0;
       border: 1px solid #dbdbdb;
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
+      position: relative;
     }
     .post img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
-    /* 上傳彈窗 */
+    /* 上傳視窗 */
     #uploadModal {
       position: fixed;
       top: 0; left: 0;
@@ -75,10 +79,11 @@
     .upload-box {
       background: #fff;
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       text-align: center;
       width: 90%;
-      max-width: 300px;
+      max-width: 320px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     input[type="file"] {
       display: none;
@@ -91,6 +96,12 @@
       border-radius: 6px;
       cursor: pointer;
       margin-top: 10px;
+      font-size: 15px;
+    }
+    .btn.cancel {
+      background: #ccc;
+      color: #000;
+      margin-left: 10px;
     }
   </style>
 </head>
@@ -105,10 +116,9 @@
   <div id="uploadModal">
     <div class="upload-box">
       <h3>上傳貼文</h3>
-      <input type="file" id="fileInput" accept="image/*" />
+      <input type="file" id="fileInput" accept="image/*">
       <button class="btn" onclick="document.getElementById('fileInput').click()">選擇圖片</button>
-      <br />
-      <button class="btn" style="background:#ccc;color:#000" onclick="closeUpload()">取消</button>
+      <button class="btn cancel" onclick="closeUpload()">取消</button>
     </div>
   </div>
 
@@ -123,23 +133,34 @@
 
     function closeUpload() {
       uploadModal.style.display = 'none';
+      fileInput.value = ''; // 清空檔案狀態
     }
 
-    fileInput.addEventListener('change', function() {
+    fileInput.addEventListener('change', function () {
       const file = this.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          const post = document.createElement('div');
-          post.className = 'post';
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const post = document.createElement('div');
+        post.classList.add('post');
+
+        const img = document.createElement('img');
+        img.src = e.target.result;
+
+        // 確保圖片加載後才顯示（避免 Safari 不顯示）
+        img.onload = () => {
           post.appendChild(img);
-          posts.insertBefore(post, posts.firstChild); // 新貼文在最上面
+          posts.insertBefore(post, posts.firstChild);
           closeUpload();
         };
-        reader.readAsDataURL(file);
-      }
+
+        // 加載失敗處理
+        img.onerror = () => {
+          alert("圖片載入失敗，請重新上傳。");
+        };
+      };
+      reader.readAsDataURL(file);
     });
   </script>
 </body>
